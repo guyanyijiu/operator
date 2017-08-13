@@ -1,0 +1,21 @@
+{
+    "name": "guyanyijiu/operator",
+    "description": "运营商服务",
+    "type": "library",
+    "require": {
+        "php-curl-class/php-curl-class": "^7.3"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "liuchao",
+            "email": "php_liuchao@163.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Operator\\": "src/"
+        }
+    }
+}
