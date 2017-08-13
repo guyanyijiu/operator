@@ -12,7 +12,6 @@
             "email": "php_liuchao@163.com"
         }
     ],
-    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Operator\\": "src/"
