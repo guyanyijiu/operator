@@ -33,7 +33,7 @@ class Wecash implements Driver {
      *             https://open.wecash.net/query/v1/{source}?client_customer_id={client_customer_id}&timestamp={timestamp}&signature={signature}
      */
     private $call_info_url = 'https://open.wecash.net/query/v1/%s?client_customer_id=%s&timestamp=%s&signature=%s';
-
+    
 
     /**
      * 获取H5授权页面URL
@@ -63,6 +63,8 @@ class Wecash implements Driver {
         list($msec, $sec) = explode(' ', microtime());
         $timestamp = $sec . ceil($msec * 1000);
 
+        $args['userid'] = $this->disposeUserid($args['userid']);
+
         $signature = $this->signature([
             $this->source,
             $args['userid'],
@@ -76,9 +78,9 @@ class Wecash implements Driver {
         } else {
             if($curl->response->code == 'E000000'){
                 $ret = [
-                    'basic_info' => json_encode($curl->response->data->transportation[0]->origin->base_info),
-                    'bill_info' => json_encode($curl->response->data->transportation[0]->origin->bill_info),
-                    'call_info' => json_encode($curl->response->data->transportation[0]->origin->call_info),
+                    'basic_info' => json_encode($curl->response->data->transportation[0]->origin->base_info, JSON_UNESCAPED_UNICODE),
+                    'bill_info' => json_encode($curl->response->data->transportation[0]->origin->bill_info, JSON_UNESCAPED_UNICODE),
+                    'call_info' => json_encode($curl->response->data->transportation[0]->origin->call_info, JSON_UNESCAPED_UNICODE),
                 ];
 
                 $call_info = $curl->response->data->transportation[0]->origin->call_info;
