@@ -1,6 +1,6 @@
 {
     "name": "guyanyijiu/operator",
-    "description": "运营商服务",
+    "description": "对接第三方平台获取用户运营商处的数据",
     "type": "library",
     "require": {
         "php-curl-class/php-curl-class": "^7.3"
