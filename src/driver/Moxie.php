@@ -2,7 +2,8 @@
 
 namespace Operator\Driver;
 
-use \Curl\MultiCurl;
+use GuzzleHttp\Client;
+use GuzzleHttp\Promise;
 
 /**
  * 魔蝎运营商认证类
@@ -15,12 +16,12 @@ class Moxie implements Driver {
     /**
      * @var string 魔蝎平台apikey
      */
-    private $apiKey = apiKey;
+    private $apiKey;
 
     /**
      * @var string 魔蝎平台token
      */
-    private $token = token;
+    private $token;
 
     /**
      * @var string H5授权方式的授权页面URL
@@ -47,7 +48,20 @@ class Moxie implements Driver {
      */
 //    private $all_info_url = 'https://api.51datakey.com/carrier/v3/mobiles/%s/mxdata?task_id=%s';
 
-
+    /**
+     * 设置 apikey 和 token
+     *
+     * Moxie constructor.
+     *
+     * @param array $args
+     */
+    public function __construct($args = []){
+        if(!isset($args['apikey']) || !isset($args['token'])){
+            throw new \InvalidArgumentException('no apikey and token');
+        }
+        $this->apiKey = $args['apikey'];
+        $this->token = $args['token'];
+    }
 
     /**
      * 获取H5授权页面URL
@@ -92,32 +106,24 @@ class Moxie implements Driver {
         $call_info_url = sprintf($this->call_info_url, $args['phone'], $args['task_id']);
 
         $ret = [];
-        $multi_curl = new MultiCurl();
 
-        $multi_curl->setHeader('Authorization', "apikey {$this->apiKey}");
-        $multi_curl->setHeader('Authorization', "token {$this->token}");
+        $client = new Client([
+            'headers' => [
+                'Authorization' => "apikey {$this->apiKey}",
+                'Authorization' => "token {$this->token}"
+            ]
+        ]);
+        $promises = [
+            'basic_info' => $client->getAsync($basic_info_url),
+            'bill_info' => $client->getAsync($bill_info_url),
+            'call_info' => $client->getAsync($call_info_url),
+        ];
 
-        $multi_curl->success(function($instance) use (&$ret, $basic_info_url, $bill_info_url, $call_info_url) {
+        $results = Promise\unwrap($promises);
 
-            switch ($instance->url){
-                case $basic_info_url:
-                    $ret['basic_info'] = gzdecode($instance->response);
-                    break;
-                case $bill_info_url:
-                    $ret['bill_info'] = gzdecode($instance->response);
-                    break;
-                case $call_info_url:
-                    $ret['call_info'] = gzdecode($instance->response);
-                    break;
-            }
-
-        });
-
-        $multi_curl->addGet($basic_info_url);
-        $multi_curl->addGet($bill_info_url);
-        $multi_curl->addGet($call_info_url);
-
-        $multi_curl->start();
+        $ret['basic_info'] = $results['basic_info']->getBody()->getContents();
+        $ret['bill_info'] = $results['bill_info']->getBody()->getContents();
+        $ret['call_info'] = $results['call_info']->getBody()->getContents();
 
         if($ret['basic_info'] && $ret['bill_info'] && $ret['call_info']){
             $call_info = json_decode($ret['call_info'], true);
@@ -128,8 +134,8 @@ class Moxie implements Driver {
             $ret['call_count'] = $call_count;
             return $ret;
         }
-        return false;
 
+        return false;
     }
 
 

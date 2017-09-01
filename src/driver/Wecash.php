@@ -2,7 +2,7 @@
 
 namespace Operator\Driver;
 
-use \Curl\Curl;
+use GuzzleHttp\Client;
 
 /**
  * 闪银运营商认证类
@@ -15,12 +15,12 @@ class Wecash implements Driver {
     /**
      * @var string 在闪银的商户号
      */
-    private $source = source;
+    private $source;
 
     /**
      * @var string 数据获取的密钥
      */
-    private $token = token;
+    private $token;
 
     /**
      * @var string H5授权方式的授权页面URL
@@ -33,7 +33,21 @@ class Wecash implements Driver {
      *             https://open.wecash.net/query/v1/{source}?client_customer_id={client_customer_id}&timestamp={timestamp}&signature={signature}
      */
     private $call_info_url = 'https://open.wecash.net/query/v1/%s?client_customer_id=%s&timestamp=%s&signature=%s';
-    
+
+    /**
+     * 设置 source 和 token
+     *
+     * Wecash constructor.
+     *
+     * @param array $args
+     */
+    public function __construct($args = []){
+        if(!isset($args['source']) || !isset($args['token'])){
+            throw new \InvalidArgumentException('no source and token');
+        }
+        $this->source = $args['source'];
+        $this->token = $args['token'];
+    }
 
     /**
      * 获取H5授权页面URL
@@ -71,30 +85,31 @@ class Wecash implements Driver {
             $timestamp,
         ]);
         $url = sprintf($this->call_info_url, $this->source, $args['userid'], $timestamp, $signature);
-        $curl = new Curl();
-        $curl->get($url);
-        if ($curl->error) {
+        $client = new Client();
+        $response = $client->request('GET', $url);
+        if($response->getStatusCode() != 200){
             return false;
-        } else {
-            if($curl->response->code == 'E000000'){
-                $ret = [
-                    'basic_info' => json_encode($curl->response->data->transportation[0]->origin->base_info, JSON_UNESCAPED_UNICODE),
-                    'bill_info' => json_encode($curl->response->data->transportation[0]->origin->bill_info, JSON_UNESCAPED_UNICODE),
-                    'call_info' => json_encode($curl->response->data->transportation[0]->origin->call_info, JSON_UNESCAPED_UNICODE),
-                ];
+        }
+        $result = json_decode($response->getBody()->getContents(), true);
 
-                $call_info = $curl->response->data->transportation[0]->origin->call_info;
-                $call_count = 0;
-                foreach($call_info->data as $list){
-                    if(isset($list->details)){
-                        $call_count += count($list->details);
-                    }
+        if($result['code'] == 'E000000'){
+            $ret = [
+                'basic_info' => json_encode($result['data']['transportation'][0]['origin']['base_info'], JSON_UNESCAPED_UNICODE),
+                'bill_info' => json_encode($result['data']['transportation'][0]['origin']['bill_info'], JSON_UNESCAPED_UNICODE),
+                'call_info' => json_encode($result['data']['transportation'][0]['origin']['call_info'], JSON_UNESCAPED_UNICODE),
+            ];
+
+            $call_info = $result['data']['transportation'][0]['origin']['call_info'];
+            $call_count = 0;
+            foreach($call_info['data'] as $list){
+                if(isset($list['details'])){
+                    $call_count += count($list['details']);
                 }
-                $ret['call_count'] = $call_count;
-                return $ret;
-            }else{
-                return false;
             }
+            $ret['call_count'] = $call_count;
+            return $ret;
+        }else{
+            return false;
         }
     }
 
