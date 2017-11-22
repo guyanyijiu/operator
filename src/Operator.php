@@ -10,13 +10,13 @@ namespace Operator;
  */
 class Operator {
 
-    private static $_instance;
+    private $_instance;
 
     public function __construct($type, $args = []){
         if($type){
-            $class = '\\Operator\\Driver\\' . ucwords(strtolower($type));
+            $class = "\\Operator\\Driver\\" . ucwords(strtolower($type));
             if(class_exists($class)){
-                self::$_instance = new $class($args);
+                $this->_instance = new $class($args);
                 return;
             }
         }
@@ -24,7 +24,7 @@ class Operator {
     }
 
     public function __call($method, $arguments){
-        return call_user_func_array([self::$_instance, $method], $arguments);
+        return call_user_func_array([$this->_instance, $method], $arguments);
     }
 
 }

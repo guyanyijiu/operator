@@ -4,6 +4,7 @@ namespace Operator\Driver;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise;
+use Operator\Config;
 
 /**
  * 魔蝎运营商认证类
@@ -53,14 +54,10 @@ class Moxie implements Driver {
      *
      * Moxie constructor.
      *
-     * @param array $args
      */
-    public function __construct($args = []){
-        if(!isset($args['apikey']) || !isset($args['token'])){
-            throw new \InvalidArgumentException('no apikey and token');
-        }
-        $this->apiKey = $args['apikey'];
-        $this->token = $args['token'];
+    public function __construct(){
+        $this->apiKey = Config::$moxie['apikey'];
+        $this->token = Config::$moxie['token'];
     }
 
     /**

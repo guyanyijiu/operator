@@ -3,6 +3,7 @@
 namespace Operator\Driver;
 
 use GuzzleHttp\Client;
+use Operator\Config;
 
 /**
  * 闪银运营商认证类
@@ -39,14 +40,10 @@ class Wecash implements Driver {
      *
      * Wecash constructor.
      *
-     * @param array $args
      */
-    public function __construct($args = []){
-        if(!isset($args['source']) || !isset($args['token'])){
-            throw new \InvalidArgumentException('no source and token');
-        }
-        $this->source = $args['source'];
-        $this->token = $args['token'];
+    public function __construct(){
+        $this->source = Config::$wecash['source'];
+        $this->token = Config::$wecash['token'];
     }
 
     /**
