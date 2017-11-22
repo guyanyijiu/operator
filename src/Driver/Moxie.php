@@ -118,6 +118,7 @@ class Moxie implements Driver {
 
         $results = Promise\unwrap($promises);
 
+        $ret['phone'] = $args['phone'];
         $ret['basic_info'] = $results['basic_info']->getBody()->getContents();
         $ret['bill_info'] = $results['bill_info']->getBody()->getContents();
         $ret['call_info'] = $results['call_info']->getBody()->getContents();

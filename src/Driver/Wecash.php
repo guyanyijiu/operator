@@ -82,21 +82,41 @@ class Wecash implements Driver {
             $timestamp,
         ]);
         $url = sprintf($this->call_info_url, $this->source, $args['userid'], $timestamp, $signature);
+
         $client = new Client();
         $response = $client->request('GET', $url);
         if($response->getStatusCode() != 200){
             return false;
         }
+
         $result = json_decode($response->getBody()->getContents(), true);
 
         if($result['code'] == 'E000000'){
+
+            $maxKey = 0;
+
+            if(count($result['data']['transportation']) > 1){
+                $maxUpdate = 0;
+                foreach($result['data']['transportation'] as $k => $v){
+                    $time = $v['origin']['update_time'];
+                    $time = substr($time, 0, strrpos($time, ':'));
+                    $time = strtotime($time);
+
+                    if($time > $maxUpdate){
+                        $maxUpdate = $time;
+                        $maxKey = $k;
+                    }
+                }
+            }
+
             $ret = [
-                'basic_info' => json_encode($result['data']['transportation'][0]['origin']['base_info'], JSON_UNESCAPED_UNICODE),
-                'bill_info' => json_encode($result['data']['transportation'][0]['origin']['bill_info'], JSON_UNESCAPED_UNICODE),
-                'call_info' => json_encode($result['data']['transportation'][0]['origin']['call_info'], JSON_UNESCAPED_UNICODE),
+                'phone' => $result['data']['transportation'][$maxKey]['account'],
+                'basic_info' => json_encode($result['data']['transportation'][$maxKey]['origin']['base_info'], JSON_UNESCAPED_UNICODE),
+                'bill_info' => json_encode($result['data']['transportation'][$maxKey]['origin']['bill_info'], JSON_UNESCAPED_UNICODE),
+                'call_info' => json_encode($result['data']['transportation'][$maxKey]['origin']['call_info'], JSON_UNESCAPED_UNICODE),
             ];
 
-            $call_info = $result['data']['transportation'][0]['origin']['call_info'];
+            $call_info = $result['data']['transportation'][$maxKey]['origin']['call_info'];
             $call_count = 0;
             foreach($call_info['data'] as $list){
                 if(isset($list['details'])){
